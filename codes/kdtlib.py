@@ -76,22 +76,8 @@ def factorize(df, columns=DISCRETE_COLUMNS):
 # 初始化 valueMap
 def mapInit(data=None):
     global DATA, ID2VALUE, VALUE2ID
-    # 如果已经本地装载
-    if osp.exists(osp.join(DATA_DIR, "maps.npy")) and osp.exists(
-            osp.join(DATA_DIR, "dataset.csv")
-        ):
-        DATA = pd.read_csv(osp.join(DATA_DIR, "dataset.csv"))
-        VALUE2ID, ID2VALUE = np.load(
-            osp.join(DATA_DIR, "maps.npy"), allow_pickle=True
-        )
-        return
-    if data is None:
-        return
-    # 装载到本地
     DATA, ID2VALUE, VALUE2ID = factorize(data)
     maps = [VALUE2ID, ID2VALUE]
-    np.save(osp.join(DATA_DIR, "maps.npy"), maps)
-    DATA.to_csv(osp.join(DATA_DIR, "dataset.csv"), index=False)
 
 # 根据 col 读取模型名称
 def getDataName(col) -> str:
@@ -136,12 +122,11 @@ def numerize(Q: pd.DataFrame):
 
 # 从 data 中读取数据
 def loadData(data):
-    if not osp.exists(osp.join(DATA_DIR, "dataset.csv")):
-        data = data[COLUMNS]
-        mapInit(data)
-        data = DATA.copy()
-        values = data.values.astype(np.float32)
-        kdt.loadData(values, data.shape[0])
+    data = data[COLUMNS]
+    mapInit(data)
+    data = DATA.copy()
+    values = data.values.astype(np.float32)
+    kdt.loadData(values, data.shape[0])
 
 def buildKDTreeProcessed(col, deltaDepth):
     _col = np.array(col, dtype=np.int32)
@@ -198,5 +183,3 @@ def loadTreeData():
     if isLoaded == 0:
         kdt.loadTreeData()
         isLoaded = 1
-
-mapInit()
